@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,27 +10,34 @@ import (
 	"path/filepath"
 )
 
+type Request struct {
+	URL string `json:"url"`
+}
+
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "only POST method allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form data", http.StatusBadRequest)
+	var req Request
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	if req.URL == "" {
+		http.Error(w, "url field is required", http.StatusBadRequest)
 		return
 	}
 
-	targetURL := r.FormValue("url")
-	if targetURL == "" {
-		http.Error(w, "url parameter is required", http.StatusBadRequest)
-		return
-	}
-
-	if _, err := url.ParseRequestURI(targetURL); err != nil {
+	if _, err := url.ParseRequestURI(req.URL); err != nil {
 		http.Error(w, "invalid url", http.StatusBadRequest)
 		return
 	}
+
+	targetURL := req.URL
 
 	resp, err := http.Get(targetURL)
 	if err != nil {
