@@ -8,11 +8,15 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+
+	cloudscraper "github.com/Advik-B/cloudscraper/lib"
 )
 
 type Request struct {
 	URL string `json:"url"`
 }
+
+var scraper *cloudscraper.Scraper
 
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -39,7 +43,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	targetURL := req.URL
 
-	resp, err := http.Get(targetURL)
+	resp, err := scraper.Get(targetURL)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("download failed: %v", err), http.StatusInternalServerError)
 		return
@@ -80,6 +84,13 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+
+	sc, err := cloudscraper.New()
+	if err != nil {
+		fmt.Printf("failed to create cloudscraper: %v\n", err)
+		os.Exit(1)
+	}
+	scraper = sc
 
 	http.HandleFunc("/download", downloadHandler)
 	fmt.Printf("server starting on :%s...\n", port)
