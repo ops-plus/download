@@ -33,3 +33,16 @@ go.work.sum
 
 # built binary
 /download
+
+# Python virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary files
+*.swp
+*.swo
+*~
